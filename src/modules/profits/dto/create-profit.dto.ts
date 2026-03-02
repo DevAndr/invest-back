@@ -28,4 +28,19 @@ export class CreateProfitDto {
   @IsOptional()
   @IsNumber()
   ebitda?: number;
+
+  @ApiPropertyOptional({ example: 12.5, description: 'EV/EBITDA' })
+  @IsOptional()
+  @IsNumber()
+  evEbitda?: number;
+
+  @ApiPropertyOptional({ example: 25.3, description: 'ROE, %' })
+  @IsOptional()
+  @IsNumber()
+  roe?: number;
+
+  @ApiPropertyOptional({ example: 18.7, description: 'P/E' })
+  @IsOptional()
+  @IsNumber()
+  pe?: number;
 }

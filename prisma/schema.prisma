@@ -47,6 +47,9 @@ model Profit {
   grossProfit Float?
   ebitda      Float?
   margin      Float?
+  evEbitda    Float?
+  roe         Float?
+  pe          Float?
   createdAt   DateTime   @default(now())
 
   @@unique([companyId, period, periodType])

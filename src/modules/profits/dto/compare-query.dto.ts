@@ -36,10 +36,10 @@ export class CompareQueryDto {
   periodType?: PeriodType;
 
   @ApiPropertyOptional({
-    enum: ['revenue', 'netProfit', 'grossProfit', 'ebitda', 'margin'],
+    enum: ['revenue', 'netProfit', 'grossProfit', 'ebitda', 'margin', 'evEbitda', 'roe', 'pe'],
     default: 'netProfit',
   })
   @IsOptional()
-  @IsIn(['revenue', 'netProfit', 'grossProfit', 'ebitda', 'margin'])
+  @IsIn(['revenue', 'netProfit', 'grossProfit', 'ebitda', 'margin', 'evEbitda', 'roe', 'pe'])
   metric?: string = 'netProfit';
 }

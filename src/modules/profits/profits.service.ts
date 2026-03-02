@@ -83,6 +83,9 @@ export class ProfitsService {
         grossProfit: dto.grossProfit,
         ebitda: dto.ebitda,
         margin,
+        evEbitda: dto.evEbitda,
+        roe: dto.roe,
+        pe: dto.pe,
       },
     });
   }
@@ -104,6 +107,9 @@ export class ProfitsService {
       grossProfit: dto.grossProfit,
       ebitda: dto.ebitda,
       margin: dto.revenue !== 0 ? (dto.netProfit / dto.revenue) * 100 : null,
+      evEbitda: dto.evEbitda,
+      roe: dto.roe,
+      pe: dto.pe,
     }));
 
     const result = await this.prisma.profit.createMany({
@@ -297,6 +303,12 @@ export class ProfitsService {
         return profit.ebitda;
       case 'margin':
         return profit.margin;
+      case 'evEbitda':
+        return profit.evEbitda;
+      case 'roe':
+        return profit.roe;
+      case 'pe':
+        return profit.pe;
       default:
         return profit.netProfit;
     }

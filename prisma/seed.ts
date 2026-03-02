@@ -72,19 +72,22 @@ async function main() {
 
   // Данные прибыли — поквартально 2020-2024
   // Все значения в миллионах USD
-  const profitData: Record<string, { baseRevenue: number; baseProfit: number; growthRate: number }> = {
-    AAPL: { baseRevenue: 65000, baseProfit: 13000, growthRate: 0.06 },
-    MSFT: { baseRevenue: 38000, baseProfit: 12000, growthRate: 0.12 },
-    TSLA: { baseRevenue: 6000, baseProfit: -100, growthRate: 0.35 },
-    AMZN: { baseRevenue: 75000, baseProfit: 2500, growthRate: 0.18 },
-    GOOGL: { baseRevenue: 41000, baseProfit: 8000, growthRate: 0.15 },
-    GAZP: { baseRevenue: 25000, baseProfit: 5000, growthRate: 0.03 },
-    SBER: { baseRevenue: 12000, baseProfit: 3000, growthRate: 0.08 },
-    YNDX: { baseRevenue: 800, baseProfit: 100, growthRate: 0.25 },
-    SMSN: { baseRevenue: 50000, baseProfit: 6000, growthRate: 0.05 },
-    TM: { baseRevenue: 65000, baseProfit: 5000, growthRate: 0.04 },
-    NVDA: { baseRevenue: 3000, baseProfit: 600, growthRate: 0.45 },
-    META: { baseRevenue: 21000, baseProfit: 7000, growthRate: 0.1 },
+  const profitData: Record<string, {
+    baseRevenue: number; baseProfit: number; growthRate: number;
+    baseEvEbitda: number; baseRoe: number; basePe: number;
+  }> = {
+    AAPL: { baseRevenue: 65000, baseProfit: 13000, growthRate: 0.06, baseEvEbitda: 18, baseRoe: 147, basePe: 28 },
+    MSFT: { baseRevenue: 38000, baseProfit: 12000, growthRate: 0.12, baseEvEbitda: 22, baseRoe: 40, basePe: 32 },
+    TSLA: { baseRevenue: 6000, baseProfit: -100, growthRate: 0.35, baseEvEbitda: 75, baseRoe: -2, basePe: -120 },
+    AMZN: { baseRevenue: 75000, baseProfit: 2500, growthRate: 0.18, baseEvEbitda: 28, baseRoe: 18, basePe: 60 },
+    GOOGL: { baseRevenue: 41000, baseProfit: 8000, growthRate: 0.15, baseEvEbitda: 16, baseRoe: 22, basePe: 25 },
+    GAZP: { baseRevenue: 25000, baseProfit: 5000, growthRate: 0.03, baseEvEbitda: 3.5, baseRoe: 12, basePe: 4 },
+    SBER: { baseRevenue: 12000, baseProfit: 3000, growthRate: 0.08, baseEvEbitda: 5, baseRoe: 20, basePe: 5 },
+    YNDX: { baseRevenue: 800, baseProfit: 100, growthRate: 0.25, baseEvEbitda: 14, baseRoe: 15, basePe: 35 },
+    SMSN: { baseRevenue: 50000, baseProfit: 6000, growthRate: 0.05, baseEvEbitda: 6, baseRoe: 10, basePe: 12 },
+    TM: { baseRevenue: 65000, baseProfit: 5000, growthRate: 0.04, baseEvEbitda: 9, baseRoe: 10, basePe: 10 },
+    NVDA: { baseRevenue: 3000, baseProfit: 600, growthRate: 0.45, baseEvEbitda: 55, baseRoe: 30, basePe: 65 },
+    META: { baseRevenue: 21000, baseProfit: 7000, growthRate: 0.1, baseEvEbitda: 12, baseRoe: 25, basePe: 22 },
   };
 
   for (const company of companies) {
@@ -101,6 +104,9 @@ async function main() {
       grossProfit: number;
       ebitda: number;
       margin: number;
+      evEbitda: number;
+      roe: number;
+      pe: number;
     }[] = [];
 
     for (let year = 2020; year <= 2024; year++) {
@@ -120,6 +126,12 @@ async function main() {
         const ebitda = Math.round(netProfit * (1.3 + Math.random() * 0.4));
         const margin = revenue !== 0 ? Math.round((netProfit / revenue) * 10000) / 100 : 0;
 
+        // EV/EBITDA, ROE, P/E — с небольшим дрейфом и шумом по кварталам
+        const multNoise = () => 0.9 + Math.random() * 0.2;
+        const evEbitda = Math.round(config.baseEvEbitda * growthFactor * multNoise() * 100) / 100;
+        const roe = Math.round(config.baseRoe * multNoise() * 100) / 100;
+        const pe = Math.round(config.basePe * growthFactor * multNoise() * 100) / 100;
+
         const month = (quarter - 1) * 3 + 1;
         profits.push({
           companyId: company.id,
@@ -130,6 +142,9 @@ async function main() {
           grossProfit,
           ebitda,
           margin,
+          evEbitda,
+          roe,
+          pe,
         });
       }
     }

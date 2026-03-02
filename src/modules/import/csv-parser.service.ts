@@ -11,6 +11,9 @@ export interface ParsedProfitRecord {
   netProfit: number | null;
   grossProfit: number | null;
   margin: number | null;
+  evEbitda: number | null;
+  roe: number | null;
+  pe: number | null;
 }
 
 @Injectable()
@@ -49,8 +52,6 @@ export class CsvParserService {
       const ROE = this.get(dataMap, 'ROE, %', i);
       const PE = this.get(dataMap, 'P/E', i);
 
-      console.log({evEBIDA, ROE, PE})
-
       const record: ParsedProfitRecord = {
         period: p.iso,
         quarter: p.q,
@@ -65,6 +66,9 @@ export class CsvParserService {
             ? Math.round((revenue - cost) * 100) / 100
             : null,
         margin: this.get(dataMap, 'Чистая рентаб, %', i),
+        evEbitda: evEBIDA,
+        roe: ROE,
+        pe: PE,
       };
 
       if (record.revenue !== null || record.netProfit !== null || record.ebitda !== null) {
