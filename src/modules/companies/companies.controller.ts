@@ -7,19 +7,16 @@ import {
   Body,
   Param,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { CompaniesService } from './companies.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { CompanyQueryDto } from './dto/company-query.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Companies')
 @Controller('companies')
@@ -42,8 +39,6 @@ export class CompaniesController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Создать компанию' })
   @ApiResponse({ status: 201, description: 'Компания создана' })
   create(@Body() dto: CreateCompanyDto) {
@@ -51,8 +46,6 @@ export class CompaniesController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Обновить компанию' })
   @ApiResponse({ status: 200, description: 'Компания обновлена' })
   update(@Param('id') id: string, @Body() dto: UpdateCompanyDto) {
@@ -60,8 +53,6 @@ export class CompaniesController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Удалить компанию' })
   @ApiResponse({ status: 200, description: 'Компания удалена' })
   remove(@Param('id') id: string) {

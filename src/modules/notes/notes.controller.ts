@@ -6,18 +6,15 @@ import {
   Delete,
   Body,
   Param,
-  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { NotesService } from './notes.service';
 import { CreateNoteDto } from './dto/create-note.dto';
 import { UpdateNoteDto } from './dto/update-note.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @ApiTags('Notes')
@@ -33,8 +30,6 @@ export class NotesController {
   }
 
   @Post('companies/:id/notes')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Создать заметку' })
   @ApiResponse({ status: 201, description: 'Заметка создана' })
   create(
@@ -46,8 +41,6 @@ export class NotesController {
   }
 
   @Patch('notes/:id')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Редактировать заметку (только автор)' })
   @ApiResponse({ status: 200, description: 'Заметка обновлена' })
   update(
@@ -59,8 +52,6 @@ export class NotesController {
   }
 
   @Delete('notes/:id')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Удалить заметку (только автор)' })
   @ApiResponse({ status: 200, description: 'Заметка удалена' })
   remove(@Param('id') id: string, @CurrentUser('id') userId: string) {

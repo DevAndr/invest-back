@@ -6,19 +6,16 @@ import {
   Body,
   Param,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { ProfitsService } from './profits.service';
 import { CreateProfitDto } from './dto/create-profit.dto';
 import { ProfitQueryDto } from './dto/profit-query.dto';
 import { CompareQueryDto } from './dto/compare-query.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Profits')
 @Controller()
@@ -33,8 +30,6 @@ export class ProfitsController {
   }
 
   @Post('companies/:id/profits')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Добавить запись прибыли' })
   @ApiResponse({ status: 201, description: 'Запись создана' })
   create(@Param('id') id: string, @Body() dto: CreateProfitDto) {
@@ -42,8 +37,6 @@ export class ProfitsController {
   }
 
   @Post('companies/:id/profits/bulk')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Массовый импорт данных прибыли' })
   @ApiResponse({ status: 201, description: 'Записи созданы' })
   createBulk(@Param('id') id: string, @Body() dtos: CreateProfitDto[]) {
@@ -51,8 +44,6 @@ export class ProfitsController {
   }
 
   @Delete('profits/:id')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Удалить запись прибыли' })
   @ApiResponse({ status: 200, description: 'Запись удалена' })
   remove(@Param('id') id: string) {
