@@ -59,11 +59,32 @@ export class ProfitsController {
     return this.profitsService.remove(id);
   }
 
+  @Get('profits/analysis')
+  @ApiOperation({ summary: 'Анализ экономических показателей по последним данным каждой компании' })
+  @ApiResponse({ status: 200, description: 'Анализ показателей' })
+  analyze() {
+    return this.profitsService.analyze();
+  }
+
+  @Get('profits/latest')
+  @ApiOperation({ summary: 'Последние данные прибыли по каждой компании и типу периода' })
+  @ApiResponse({ status: 200, description: 'Список последних записей' })
+  getLatestByCompany() {
+    return this.profitsService.getLatestByCompany();
+  }
+
   @Get('profits/compare')
   @ApiOperation({ summary: 'Сравнение компаний по метрике' })
   @ApiResponse({ status: 200, description: 'Данные для сравнения' })
   compare(@Query() query: CompareQueryDto) {
     return this.profitsService.compare(query);
+  }
+
+  @Get('profits/metrics/:companyId')
+  @ApiOperation({ summary: 'Массив данных по каждому экономическому показателю компании' })
+  @ApiResponse({ status: 200, description: 'Данные метрик по периодам' })
+  metricsByCompany(@Param('companyId') companyId: string) {
+    return this.profitsService.metricsByCompany(companyId);
   }
 
   @Get('profits/summary/:companyId')

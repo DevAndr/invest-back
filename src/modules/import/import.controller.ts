@@ -1,5 +1,3 @@
-// src/modules/import/import.controller.ts
-
 import {
   Controller,
   Post,
@@ -45,13 +43,7 @@ export class ImportController {
       },
     },
   })
-  async previewCsv(
-    @UploadedFile() file: Express.Multer.File,
-  ): Promise<{
-    totalRecords: number;
-    periods: string[];
-    data: ParsedProfitRecord[];
-  }> {
+  previewCsv(@UploadedFile() file: Express.Multer.File) {
     this.validateFile(file);
 
     const content = file.buffer.toString('utf-8');
@@ -173,7 +165,8 @@ export class ImportController {
         },
         companies: {
           type: 'string',
-          description: 'JSON-массив: [{"companyName":"Apple","ticker":"AAPL","industry":"Technology"}, ...]',
+          description:
+            'JSON-массив: [{"companyName":"Apple","ticker":"AAPL","industry":"Technology"}, ...]',
           example: '[{"companyName":"Apple","ticker":"AAPL"}]',
         },
       },
@@ -191,14 +184,23 @@ export class ImportController {
       throw new BadRequestException('Файлы не загружены');
     }
 
-    let companiesMeta: { companyName: string; ticker?: string; industry?: string }[];
+    let companiesMeta: {
+      companyName: string;
+      ticker?: string;
+      industry?: string;
+    }[];
     try {
       companiesMeta = JSON.parse(companiesRaw);
     } catch {
-      throw new BadRequestException('Поле companies должно быть валидным JSON-массивом');
+      throw new BadRequestException(
+        'Поле companies должно быть валидным JSON-массивом',
+      );
     }
 
-    if (!Array.isArray(companiesMeta) || companiesMeta.length !== files.length) {
+    if (
+      !Array.isArray(companiesMeta) ||
+      companiesMeta.length !== files.length
+    ) {
       throw new BadRequestException(
         `Количество файлов (${files.length}) не совпадает с количеством записей в companies (${companiesMeta?.length ?? 0})`,
       );
@@ -234,7 +236,11 @@ export class ImportController {
         company = await this.prisma.company.upsert({
           where: { ticker: meta.ticker },
           update: { name: meta.companyName.trim(), industry: meta.industry },
-          create: { name: meta.companyName.trim(), ticker: meta.ticker, industry: meta.industry },
+          create: {
+            name: meta.companyName.trim(),
+            ticker: meta.ticker,
+            industry: meta.industry,
+          },
         });
       } else {
         company = await this.prisma.company.create({
@@ -265,78 +271,63 @@ export class ImportController {
     companyId: string,
     records: ParsedProfitRecord[],
   ): Promise<{ imported: number; skipped: number; errors: string[] }> {
-    let imported = 0;
-    let skipped = 0;
     const errors: string[] = [];
 
-    // Батч через транзакцию
-    const operations = records
-      .filter((r) => r.revenue !== null || r.netProfit !== null)
-      .map((record) => {
-        const period = new Date(record.period);
-        const data = {
-          revenue: record.revenue ?? 0,
-          netProfit: record.netProfit ?? 0,
-          grossProfit: record.grossProfit,
-          ebitda: record.ebitda,
-          margin: record.margin,
-          evEbitda: record.evEbitda,
-          roe: record.roe,
-          pe: record.pe,
-        };
+    const validRecords = records.filter(
+      (r) => r.revenue !== null || r.netProfit !== null,
+    );
 
-        return this.prisma.profit.upsert({
-          where: {
-            companyId_period_periodType: {
-              companyId,
-              period,
-              periodType: 'QUARTER',
-            },
-          },
-          update: data,
-          create: { companyId, period, periodType: 'QUARTER', ...data },
-        });
-      });
-
-    try {
-      await this.prisma.$transaction(operations);
-      imported = operations.length;
-    } catch {
-      // Fallback: по одной записи
-      for (const record of records) {
-        try {
-          const period = new Date(record.period);
-          const data = {
-            revenue: record.revenue ?? 0,
-            netProfit: record.netProfit ?? 0,
-            grossProfit: record.grossProfit,
-            ebitda: record.ebitda,
-            margin: record.margin,
-            evEbitda: record.evEbitda,
-            roe: record.roe,
-            pe: record.pe,
-          };
-
-          await this.prisma.profit.upsert({
-            where: {
-              companyId_period_periodType: {
-                companyId,
-                period,
-                periodType: 'QUARTER',
-              },
-            },
-            update: data,
-            create: { companyId, period, periodType: 'QUARTER', ...data },
-          });
-          imported++;
-        } catch (err) {
-          skipped++;
-          errors.push(
-            `${record.periodLabel}: ${err instanceof Error ? err.message : 'Ошибка'}`,
-          );
-        }
-      }
+    if (validRecords.length === 0) {
+      return { imported: 0, skipped: 0, errors };
     }
+
+    // Считаем записи до вставки
+    const countBefore = await this.prisma.profit.count({
+      where: { companyId, periodType: 'QUARTER' },
+    });
+
+    // Собираем VALUES для батч-вставки
+    const { Prisma } = await import('@prisma/client');
+
+    const values = validRecords.map((record) => {
+      const id = crypto.randomUUID();
+      const period = new Date(record.period).toISOString();
+      const revenue = record.revenue ?? 0;
+      const netProfit = record.netProfit ?? 0;
+      const grossProfit = record.grossProfit ?? null;
+      const ebitda = record.ebitda ?? null;
+      const margin = record.margin ?? null;
+      const evEbitda = record.evEbitda ?? null;
+      const roe = record.roe ?? null;
+      const pe = record.pe ?? null;
+      const periodLabel = record.periodLabel ?? null;
+
+      return Prisma.sql`(${id}, ${companyId}, ${Prisma.raw(`'${period}'::timestamp`)}, 'QUARTER'::"PeriodType", ${revenue}, ${netProfit}, ${grossProfit}, ${ebitda}, ${margin}, ${evEbitda}, ${roe}, ${pe}, ${periodLabel})`;
+    });
+
+    // Батч INSERT ... ON CONFLICT DO NOTHING
+    try {
+      await this.prisma.$executeRaw`
+        INSERT INTO "profits" (
+          "id", "companyId", "period", "periodType",
+          "revenue", "netProfit", "grossProfit", "ebitda",
+          "margin", "evEbitda", "roe", "pe", "periodLabel"
+        )
+        VALUES ${Prisma.join(values)}
+        ON CONFLICT ("companyId", "period", "periodType") DO NOTHING
+      `;
+    } catch (err) {
+      errors.push(err instanceof Error ? err.message : 'Ошибка вставки');
+      return { imported: 0, skipped: validRecords.length, errors };
+    }
+
+    // Считаем записи после вставки, чтобы определить сколько реально добавилось
+    const countAfter = await this.prisma.profit.count({
+      where: { companyId, periodType: 'QUARTER' },
+    });
+
+    const imported = countAfter - countBefore;
+    const skipped = validRecords.length - imported;
 
     return { imported, skipped, errors };
   }

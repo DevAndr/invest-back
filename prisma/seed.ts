@@ -107,6 +107,7 @@ async function main() {
       evEbitda: number;
       roe: number;
       pe: number;
+      periodLabel: string;
     }[] = [];
 
     for (let year = 2020; year <= 2024; year++) {
@@ -133,6 +134,7 @@ async function main() {
         const pe = Math.round(config.basePe * growthFactor * multNoise() * 100) / 100;
 
         const month = (quarter - 1) * 3 + 1;
+        const periodLabel = `${year}Q${quarter}`;
         profits.push({
           companyId: company.id,
           period: new Date(year, month - 1, 1),
@@ -145,6 +147,7 @@ async function main() {
           evEbitda,
           roe,
           pe,
+          periodLabel,
         });
       }
     }

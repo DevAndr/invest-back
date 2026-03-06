@@ -9,6 +9,7 @@ import { ProfitsModule } from './modules/profits/profits.module';
 import { NotesModule } from './modules/notes/notes.module';
 import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
 import { ImportModule } from './modules/import/import.module';
+import { TinkoffModule } from './modules/tinkoff/tinkoff.module';
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { ImportModule } from './modules/import/import.module';
     CompaniesModule,
     ProfitsModule,
     NotesModule,
-    ImportModule
+    ImportModule,
+    TinkoffModule
   ],
   providers: [
     {

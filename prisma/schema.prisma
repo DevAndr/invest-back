@@ -50,6 +50,7 @@ model Profit {
   evEbitda    Float?
   roe         Float?
   pe          Float?
+  periodLabel String?
   createdAt   DateTime   @default(now())
 
   @@unique([companyId, period, periodType])

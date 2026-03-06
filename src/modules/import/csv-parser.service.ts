@@ -1,10 +1,10 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 
 export interface ParsedProfitRecord {
-  period: string;          // "2024-07-01"
-  quarter: number;         // 1-4
+  period: string; // "2024-07-01"
+  quarter: number; // 1-4
   year: number;
-  periodLabel: string;     // "2024Q3"
+  periodLabel: string; // "2024Q3"
   revenue: number | null;
   operatingProfit: number | null;
   ebitda: number | null;
@@ -18,7 +18,6 @@ export interface ParsedProfitRecord {
 
 @Injectable()
 export class CsvParserService {
-
   parseSmartLabCsv(csvContent: string): ParsedProfitRecord[] {
     const lines = csvContent
       .replace(/\r\n/g, '\n')
@@ -27,7 +26,9 @@ export class CsvParserService {
       .filter((l) => l.trim().length > 0);
 
     if (lines.length < 2) {
-      throw new BadRequestException('CSV пуст или содержит недостаточно данных');
+      throw new BadRequestException(
+        'CSV пуст или содержит недостаточно данных',
+      );
     }
 
     const headerCells = this.parseLine(lines[0]);
@@ -38,7 +39,10 @@ export class CsvParserService {
       const cells = this.parseLine(lines[i]);
       const name = this.clean(cells[0] || '');
       if (!name) continue;
-      dataMap.set(name, cells.slice(1).map((c) => this.parseNum(c)));
+      dataMap.set(
+        name,
+        cells.slice(1).map((c) => this.parseNum(c)),
+      );
     }
 
     const records: ParsedProfitRecord[] = [];
@@ -71,7 +75,11 @@ export class CsvParserService {
         pe: PE,
       };
 
-      if (record.revenue !== null || record.netProfit !== null || record.ebitda !== null) {
+      if (
+        record.revenue !== null ||
+        record.netProfit !== null ||
+        record.ebitda !== null
+      ) {
         records.push(record);
       }
     }
@@ -87,10 +95,13 @@ export class CsvParserService {
     for (let i = 0; i < line.length; i++) {
       const c = line[i];
       if (c === '"') {
-        if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
-        else inQ = !inQ;
+        if (inQ && line[i + 1] === '"') {
+          cur += '"';
+          i++;
+        } else inQ = !inQ;
       } else if (c === ';' && !inQ) {
-        res.push(cur); cur = '';
+        res.push(cur);
+        cur = '';
       } else {
         cur += c;
       }
@@ -100,7 +111,9 @@ export class CsvParserService {
   }
 
   // "2024Q3" -> { y:2024, q:3, iso:"2024-07-01", label:"2024Q3" }
-  private parsePeriod(raw: string): { y: number; q: number; iso: string; label: string } | null {
+  private parsePeriod(
+    raw: string,
+  ): { y: number; q: number; iso: string; label: string } | null {
     const s = this.clean(raw);
     if (!s || s === 'LTM') return null;
 
@@ -114,7 +127,8 @@ export class CsvParserService {
       return null;
     }
 
-    const y = +m[1], q = +m[2];
+    const y = +m[1],
+      q = +m[2];
     if (q < 1 || q > 4) return null;
     const mo = String((q - 1) * 3 + 1).padStart(2, '0');
     return { y, q, iso: `${y}-${mo}-01`, label: s };
@@ -123,13 +137,21 @@ export class CsvParserService {
   // "1 502" -> 1502, "47.8%" -> 47.8, "" -> null
   private parseNum(raw: string): number | null {
     if (!raw || !raw.trim()) return null;
-    let s = raw.trim().replace(/^["']|["']$/g, '').replace(/\s/g, '').replace(/%$/, '');
+    const s = raw
+      .trim()
+      .replace(/^["']|["']$/g, '')
+      .replace(/\s/g, '')
+      .replace(/%$/, '');
     if (s === '' || s === '-') return null;
     const n = parseFloat(s);
     return isNaN(n) ? null : n;
   }
 
-  private get(map: Map<string, (number | null)[]>, key: string, i: number): number | null {
+  private get(
+    map: Map<string, (number | null)[]>,
+    key: string,
+    i: number,
+  ): number | null {
     const exact = map.get(key);
     if (exact && i < exact.length) return exact[i];
     for (const [k, v] of map.entries()) {
@@ -139,6 +161,9 @@ export class CsvParserService {
   }
 
   private clean(s: string): string {
-    return s.trim().replace(/^["']|["']$/g, '').trim();
+    return s
+      .trim()
+      .replace(/^["']|["']$/g, '')
+      .trim();
   }
 }
