@@ -73,6 +73,21 @@ model Note {
   @@map("notes")
 }
 
+model News {
+  id          String   @id @default(cuid())
+  title       String
+  url         String   @unique
+  description String?
+  image       String?
+  category    String?
+  publishedAt String
+  parsedAt    DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([parsedAt])
+  @@map("news")
+}
+
 enum PeriodType {
   MONTH
   QUARTER
