@@ -20,8 +20,4 @@ COPY prisma ./prisma
 RUN npx prisma generate
 COPY --from=builder /app/dist ./dist
 EXPOSE 3030
-<<<<<<< HEAD
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
-=======
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
->>>>>>> b86dc0f6c09946422b7e1e06ebc3c20b2c9b80b7
