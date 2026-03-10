@@ -38,13 +38,13 @@ services:
       JWT_EXPIRATION: "7d"
       PORT: 3030
       NODE_ENV: "production"
-      CORS_ORIGIN: "http://localhost:3000"
+      CORS_ORIGIN: "http://192.168.50.233:3000"
       TOKEN_TINKOFF: "t.LGtqAIrqzVIGuafWs3vp2x7QVGyFZAkJRqbs0b1OCO9FhAjd4Qw6fT_uGSbm-bQj3ZoATIqp2zWpmym59FCcwg"
     networks:
       - invest-network
 
   invest-front:
-    build: 
+    build:
       context: ../invest-front
       dockerfile: Dockerfile  # явно указываем Dockerfile (опционально)
     container_name: invest-front
@@ -53,9 +53,9 @@ services:
     environment:
       NODE_ENV: "production"
       # Если фронтенд обращается к бекенду через браузер (клиентская часть)
-      REACT_APP_API_URL: "http://localhost:3030"
+      REACT_APP_API_URL: "http://192.168.50.233:3030/api"
       # Если фронтенд обращается к бекенду на серверной стороне (SSR)
-      API_URL: "http://invest-back:3030"
+      API_URL: "http://invest-back:3030/api"
     depends_on:
       - invest-back
     restart: unless-stopped
