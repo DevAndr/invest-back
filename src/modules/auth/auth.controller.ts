@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body } from '@nestjs/common';
+import { Controller, Post, Get, Body, Patch } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -8,6 +8,7 @@ import {
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
@@ -40,5 +41,17 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Данные пользователя' })
   getMe(@CurrentUser() user: Record<string, unknown>) {
     return user;
+  }
+
+  @Patch('password')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Смена пароля' })
+  @ApiResponse({ status: 200, description: 'Пароль изменён' })
+  @ApiResponse({ status: 401, description: 'Неверный текущий пароль' })
+  changePassword(
+    @CurrentUser('id') userId: string,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    return this.authService.changePassword(userId, dto);
   }
 }
