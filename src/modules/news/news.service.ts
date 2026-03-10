@@ -18,9 +18,7 @@ export class NewsService {
     this.logger.log('Крон: запуск парсинга новостей...');
     try {
       const { saved, total } = await this.parseAndSave();
-      this.logger.log(
-        `Крон: спарсено ${total}, сохранено новых ${saved}`,
-      );
+      this.logger.log(`Крон: спарсено ${total}, сохранено новых ${saved}`);
     } catch (error) {
       this.logger.error(`Крон: ошибка парсинга — ${error.message}`);
     }
@@ -100,7 +98,8 @@ export class NewsService {
     try {
       browser = await puppeteer.launch({
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
       });
 
       const page = await browser.newPage();
@@ -158,8 +157,7 @@ export class NewsService {
       const description =
         $card.find('.info-block-description').text().trim() || null;
       const dateText = $card.find('.info-block-date').text().trim();
-      const category =
-        $card.find('.info-block-category').text().trim() || null;
+      const category = $card.find('.info-block-category').text().trim() || null;
       const image = $card.find('.picture-image').attr('src') || null;
 
       newsItems.push({
@@ -191,8 +189,7 @@ export class NewsService {
       const description =
         $el.find('.info-block-description').text().trim() || null;
       const dateText = $el.find('.info-block-date').text().trim();
-      const category =
-        $el.find('.info-block-category').text().trim() || null;
+      const category = $el.find('.info-block-category').text().trim() || null;
       const image = $el.find('.picture-image').attr('src') || null;
 
       newsItems.push({
