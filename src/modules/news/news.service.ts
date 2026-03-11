@@ -12,8 +12,8 @@ export class NewsService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Крон: парсинг каждые 30 минут */
-  @Cron(CronExpression.EVERY_30_MINUTES)
+  /** Крон: парсинг каждые 10 минут */
+  @Cron(CronExpression.EVERY_10_MINUTES)
   async handleCron(): Promise<void> {
     this.logger.log('Крон: запуск парсинга новостей...');
     try {
@@ -94,46 +94,75 @@ export class NewsService {
   private async parseNews(): Promise<NewsItemDto[]> {
     this.logger.log('Запускаем парсинг новостей RBC Economics...');
 
-    let browser: puppeteer.Browser | null = null;
-    try {
-      browser = await puppeteer.launch({
-        headless: true,
-        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
-      });
+    const maxRetries = 3;
 
-      const page = await browser.newPage();
-      await page.setUserAgent(
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      );
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      let browser: puppeteer.Browser | null = null;
+      try {
+        browser = await puppeteer.launch({
+          headless: true,
+          executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+          args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-gpu',
+            '--disable-dev-shm-usage',
+            '--disable-extensions',
+            '--disable-background-networking',
+          ],
+        });
 
-      await page.goto('https://www.rbc.ru/rubric/economics', {
-        waitUntil: 'load',
-        timeout: 30000,
-      });
+        const page = await browser.newPage();
 
-      // Ждём рендера контента
-      await new Promise((r) => setTimeout(r, 5000));
+        // Блокируем тяжёлые ресурсы — нам нужен только HTML
+        await page.setRequestInterception(true);
+        page.on('request', (req) => {
+          const type = req.resourceType();
+          if (['image', 'stylesheet', 'font', 'media'].includes(type)) {
+            req.abort();
+          } else {
+            req.continue();
+          }
+        });
 
-      // Получаем HTML через CDP — обходим проблему с destroyed execution context
-      const cdp = await page.createCDPSession();
-      const { root } = await cdp.send('DOM.getDocument', { depth: -1 });
-      const { outerHTML } = await cdp.send('DOM.getOuterHTML', {
-        nodeId: root.nodeId,
-      });
+        await page.setUserAgent(
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        );
 
-      const news = this.extractNews(outerHTML);
+        await page.goto('https://www.rbc.ru/rubric/economics', {
+          waitUntil: 'domcontentloaded',
+          timeout: 60000,
+        });
 
-      this.logger.log(`Спарсено ${news.length} новостей за сегодня`);
-      return news;
-    } catch (error) {
-      this.logger.error(`Ошибка парсинга: ${error.message}`);
-      throw error;
-    } finally {
-      if (browser) {
-        await browser.close();
+        // Ждём рендера контента
+        await new Promise((r) => setTimeout(r, 3000));
+
+        // Получаем HTML через CDP — обходим проблему с destroyed execution context
+        const cdp = await page.createCDPSession();
+        const { root } = await cdp.send('DOM.getDocument', { depth: -1 });
+        const { outerHTML } = await cdp.send('DOM.getOuterHTML', {
+          nodeId: root.nodeId,
+        });
+
+        const news = this.extractNews(outerHTML);
+
+        this.logger.log(`Спарсено ${news.length} новостей за сегодня`);
+        return news;
+      } catch (error) {
+        this.logger.error(
+          `Ошибка парсинга (попытка ${attempt}/${maxRetries}): ${error.message}`,
+        );
+        if (attempt === maxRetries) throw error;
+        // Пауза перед повтором: 5с, 10с
+        await new Promise((r) => setTimeout(r, attempt * 5000));
+      } finally {
+        if (browser) {
+          await browser.close();
+        }
       }
     }
+
+    return [];
   }
 
   private extractNews(html: string): NewsItemDto[] {
