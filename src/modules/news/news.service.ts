@@ -12,8 +12,8 @@ export class NewsService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Крон: парсинг каждые 10 минут */
-  @Cron(CronExpression.EVERY_10_MINUTES)
+  /** Крон: парсинг каждые 30 минут */
+  @Cron(CronExpression.EVERY_30_MINUTES)
   async handleCron(): Promise<void> {
     this.logger.log('Крон: запуск парсинга новостей...');
     try {
