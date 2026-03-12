@@ -53,10 +53,7 @@ export class NewsService {
     const { page = 1, limit = 20, search, sortBy, sortOrder = 'desc' } = query;
     const skip = (page - 1) * limit;
 
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-
-    const where: Record<string, unknown> = { parsedAt: { gte: todayStart } };
+    const where: Record<string, unknown> = {};
     if (search) {
       where.title = { contains: search, mode: 'insensitive' };
     }
