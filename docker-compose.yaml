@@ -54,6 +54,7 @@ services:
       NODE_ENV: "production"
       # Если фронтенд обращается к бекенду через браузер (клиентская часть)
       REACT_APP_API_URL: "http://192.168.1.88:3030/api"
+      NEXT_PUBLIC_API: "http://192.168.1.88:3030/api"
       # Если фронтенд обращается к бекенду на серверной стороне (SSR)
       API_URL: "http://invest-back:3030/api"
     depends_on:
